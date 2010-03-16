@@ -8,31 +8,28 @@ use Scalar::Util qw/blessed/;
 use Carp;
 use base qw/Exporter/;
 
-our @EXPORT = qw/connect match uri_for get post/;
+our @EXPORT = qw/connect match uri_for/;
 
 my $rules;
 
 sub connect {
     my $pkg  = caller(0);
-    my @args = @_;
-    push @{ $rules->{$pkg} }, HTTPx::Dispatcher::Rule->new(@args);
+    my @rules;
+    #XXX
+    my ($path, $method);
+    for ( @_ ){
+        if( ref $_ eq 'HASH' ){
+            push @rules, [ $path, $_, $method ];
+        }elsif ( $_ =~ /^(?:get|post)$/ ) {
+            $method = $_;
+        }else{
+            $path = $_;
+        }
+    }
+    for ( @rules ){
+        push @{ $rules->{$pkg} }, HTTPx::Dispatcher::Rule->new(@$_);
+    }
 }
-
-#XXX
-sub method {
-    my ( $name, $pkg, @args ) = @_;
-    push @{ $rules->{$pkg} }, HTTPx::Dispatcher::Rule->new(@args, $name );
-}
-
-sub get {
-    my $pkg = caller(0);
-    method('get', $pkg, @_ );
-};
-
-sub post {
-    my $pkg = caller(0);
-    method('post', $pkg, @_ );
-};
 
 sub match {
     my ( $class, $req ) = @_;

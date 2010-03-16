@@ -9,10 +9,9 @@ __PACKAGE__->mk_accessors(qw/re pattern controller action capture requirements c
 
 sub new {
     my ($class, $pattern, $args, $method) = @_;
-    use Data::Dumper;
     $args ||= {};
     $args->{conditions} ||= {};
-    $args->{method} = $method || '';
+    $args->{method} = $method || 'get';
     my $self = bless { %$args }, $class;
 
     $self->compile($pattern);
@@ -46,8 +45,8 @@ sub match {
     my ($self, $req) = @_;
     croak "request required" unless blessed $req;
 
-    if( $self->{method} ){
-        croak "request method is not match" if $req->method ne uc $self->{method};
+    if( $self->{method} && $req->method ){
+        return if $req->method ne uc $self->{method};
     }
 
     my $uri = ref($req->uri) ? $req->uri->path : $req->uri;
