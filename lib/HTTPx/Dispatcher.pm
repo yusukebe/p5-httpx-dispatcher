@@ -10,9 +10,6 @@ use base qw/Exporter/;
 
 our @EXPORT = qw/connect match uri_for get post/;
 
-*get = \&connect;
-*post = \&connect;
-
 my $rules;
 
 sub connect {
@@ -21,13 +18,28 @@ sub connect {
     push @{ $rules->{$pkg} }, HTTPx::Dispatcher::Rule->new(@args);
 }
 
+#XXX
+sub method {
+    my ( $name, $pkg, @args ) = @_;
+    push @{ $rules->{$pkg} }, HTTPx::Dispatcher::Rule->new(@args, $name );
+}
+
+sub get {
+    my $pkg = caller(0);
+    method('get', $pkg, @_ );
+};
+
+sub post {
+    my $pkg = caller(0);
+    method('post', $pkg, @_ );
+};
+
 sub match {
     my ( $class, $req ) = @_;
     croak "request required" unless blessed $req;
 
     for my $rule ( @{ $rules->{$class} } ) {
-        my $match_method = lc $req->method || 'match'; #XXX
-        if ( my $result = $rule->$match_method($req) ) {
+        if ( my $result = $rule->match($req) ) {
             return $result;
         }
     }

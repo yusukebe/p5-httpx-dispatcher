@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 2;
+use Test::More tests => 3;
 use YAML;
 use HTTPx::Dispatcher;
 use HTTP::Request;
@@ -36,3 +36,11 @@ do {
       };
 };
 
+# Error case
+
+do {
+    my $req =
+      Plack::Request->new( { PATH_INFO => '/', REQUEST_METHOD => 'POST', } );
+    my $x = MyDispatcher->match($req);
+    ok( !$x );
+};

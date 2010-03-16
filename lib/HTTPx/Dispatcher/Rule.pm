@@ -8,10 +8,11 @@ use Carp;
 __PACKAGE__->mk_accessors(qw/re pattern controller action capture requirements conditions name/);
 
 sub new {
-    my ($class, $pattern, $args) = @_;
+    my ($class, $pattern, $args, $method) = @_;
+    use Data::Dumper;
     $args ||= {};
     $args->{conditions} ||= {};
-
+    $args->{method} = $method || '';
     my $self = bless { %$args }, $class;
 
     $self->compile($pattern);
@@ -41,23 +42,13 @@ sub compile {
     $self->capture( \@capture );
 }
 
-sub get {
-    my ($self, $req) = @_;
-    croak "request required" unless blessed $req;
-    croak "request method is not GET" if $req->method ne 'GET';
-    return $self->match($req);
-}
-
-sub post {
-    my ($self, $req) = @_;
-    croak "request required" unless blessed $req;
-    croak "request method is not POST" if $req->method ne 'POST';
-    return $self->match($req);
-}
-
 sub match {
     my ($self, $req) = @_;
     croak "request required" unless blessed $req;
+
+    if( $self->{method} ){
+        croak "request method is not match" if $req->method ne uc $self->{method};
+    }
 
     my $uri = ref($req->uri) ? $req->uri->path : $req->uri;
     $uri =~ s!^/+!!;
