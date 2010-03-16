@@ -8,10 +8,9 @@ use Carp;
 __PACKAGE__->mk_accessors(qw/re pattern controller action capture requirements conditions name/);
 
 sub new {
-    my ($class, $pattern, $args, $method) = @_;
+    my ($class, $pattern, $args) = @_;
     $args ||= {};
     $args->{conditions} ||= {};
-    $args->{method} = $method || 'get';
     my $self = bless { %$args }, $class;
 
     $self->compile($pattern);
@@ -44,10 +43,6 @@ sub compile {
 sub match {
     my ($self, $req) = @_;
     croak "request required" unless blessed $req;
-
-    if( $self->{method} && $req->method ){
-        return if $req->method ne uc $self->{method};
-    }
 
     my $uri = ref($req->uri) ? $req->uri->path : $req->uri;
     $uri =~ s!^/+!!;

@@ -8,27 +8,31 @@ use Scalar::Util qw/blessed/;
 use Carp;
 use base qw/Exporter/;
 
-our @EXPORT = qw/connect match uri_for/;
+our @EXPORT = qw/connect match uri_for get post/;
 
 my $rules;
 
 sub connect {
+    my $pkg = caller(0);
+    my @args = @_;
+    push @{ $rules->{$pkg} }, HTTPx::Dispatcher::Rule->new(@args);
+}
+
+#XXX
+sub get {
     my $pkg  = caller(0);
-    my @rules;
-    #XXX
-    my ($path, $method);
-    for ( @_ ){
-        if( ref $_ eq 'HASH' ){
-            push @rules, [ $path, $_, $method ];
-        }elsif ( $_ =~ /^(?:get|post)$/ ) {
-            $method = $_;
-        }else{
-            $path = $_;
-        }
-    }
-    for ( @rules ){
-        push @{ $rules->{$pkg} }, HTTPx::Dispatcher::Rule->new(@$_);
-    }
+    my @args = @_;
+    $args[1]->{conditions} = { method => 'GET' };
+    push @{ $rules->{$pkg} },
+      HTTPx::Dispatcher::Rule->new( @args );
+}
+
+sub post {
+    my $pkg  = caller(0);
+    my @args = @_;
+    $args[1]->{conditions} = { method => 'POST' };
+    push @{ $rules->{$pkg} },
+      HTTPx::Dispatcher::Rule->new( @args );
 }
 
 sub match {
@@ -45,7 +49,6 @@ sub match {
 
 sub uri_for {
     my ( $class, @args ) = @_;
-
     for my $rule ( @{ $rules->{$class} } ) {
         if ( my $result = $rule->uri_for(@args) ) {
             return $result;
