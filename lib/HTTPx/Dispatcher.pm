@@ -8,14 +8,16 @@ use Scalar::Util qw/blessed/;
 use Carp;
 use base qw/Exporter/;
 
-our @EXPORT = qw/connect match uri_for/;
+our @EXPORT = qw/connect match uri_for get post/;
+
+*get = \&connect;
+*post = \&connect;
 
 my $rules;
 
 sub connect {
     my $pkg  = caller(0);
     my @args = @_;
-
     push @{ $rules->{$pkg} }, HTTPx::Dispatcher::Rule->new(@args);
 }
 
@@ -24,7 +26,8 @@ sub match {
     croak "request required" unless blessed $req;
 
     for my $rule ( @{ $rules->{$class} } ) {
-        if ( my $result = $rule->match($req) ) {
+        my $match_method = lc $req->method || 'match'; #XXX
+        if ( my $result = $rule->$match_method($req) ) {
             return $result;
         }
     }

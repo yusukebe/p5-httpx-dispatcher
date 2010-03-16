@@ -41,6 +41,20 @@ sub compile {
     $self->capture( \@capture );
 }
 
+sub get {
+    my ($self, $req) = @_;
+    croak "request required" unless blessed $req;
+    croak "request method is not GET" if $req->method ne 'GET';
+    return $self->match($req);
+}
+
+sub post {
+    my ($self, $req) = @_;
+    croak "request required" unless blessed $req;
+    croak "request method is not POST" if $req->method ne 'POST';
+    return $self->match($req);
+}
+
 sub match {
     my ($self, $req) = @_;
     croak "request required" unless blessed $req;
